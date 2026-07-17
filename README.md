@@ -63,6 +63,12 @@ Charts Helm для упрощения развертывания и управл
 ### Kafka
 Расположена в src/kubernetes/kafka/.
 
+#### Примечание по Kafka на Apple Silicon
+
+В исходной учебной конфигурации использовались образы `wurstmeister/kafka` и `wurstmeister/zookeeper`.
+На Apple Silicon/M1 старый ZooKeeper-образ падает из-за устаревшего amd64 Java runtime.
+Поэтому в `docker-compose.yml` используются Confluent-образы, при этом Kafka остаётся в ZooKeeper mode — переход на KRaft не выполнялся.
+
 ### CI/CD Pipeline
 GitHub Actions для непрерывной интеграции и развертывания:
 

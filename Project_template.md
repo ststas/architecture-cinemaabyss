@@ -1,4 +1,4 @@
-## Изучите [README.md](.\README.md) файл и структуру проекта.
+## Изучите [README.md](./README.md) файл и структуру проекта.
 
 # Задание 1
 
@@ -61,6 +61,9 @@ proxy-service:
 
 Необходимые тесты для проверки этого API вызываются при запуске npm run test:local из папки tests/postman
 Приложите скриншот тестов и скриншот состояния топиков Kafka из UI [http://localhost:8090](http://localhost:8090)
+
+[Скриншот tests](tests/postman/screenshots/tests.png)
+[Скриншот topics](tests/postman/screenshots/topics.png)
 
 # Задание 3
 
