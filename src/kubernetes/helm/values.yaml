@@ -113,8 +113,8 @@ eventsService:
 kafka:
   enabled: true
   image:
-    repository: wurstmeister/kafka
-    tag: 2.13-2.7.0
+    repository: confluentinc/cp-kafka
+    tag: 7.5.0
     pullPolicy: IfNotPresent
   replicas: 1
   resources:
@@ -143,8 +143,8 @@ kafka:
 zookeeper:
   enabled: true
   image:
-    repository: wurstmeister/zookeeper
-    tag: latest
+    repository: confluentinc/cp-zookeeper
+    tag: 7.5.0
     pullPolicy: IfNotPresent
   replicas: 1
   resources:

@@ -20,44 +20,44 @@ spec:
       labels:
         app: movies-service
     spec:
-      containers:
-      - name: movies-service
-        image: ghcr.io/db-exp/cinemaabysstest/movies-service:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 8081
-        env:
-        - name: PORT
-          value: "8081"
-        - name: DB_CONNECTION_STRING
-          value: "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
-        envFrom:
-        - configMapRef:
-            name: cinemaabyss-config
-        - secretRef:
-            name: cinemaabyss-secrets
-        resources:
-          limits:
-            cpu: "300m"
-            memory: "256Mi"
-          requests:
-            cpu: "100m"
-            memory: "128Mi"
-        readinessProbe:
-          httpGet:
-            path: /api/movies/health
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        livenessProbe:
-          httpGet:
-            path: /api/movies/health
-            port: 8081
-          initialDelaySeconds: 15
-          periodSeconds: 20
-      restartPolicy: Always
       imagePullSecrets:
         - name: dockerconfigjson
+      containers:
+        - name: movies-service
+          image: ghcr.io/ststas/architecture-cinemaabyss/movies-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8081
+          env:
+            - name: PORT
+              value: "8081"
+            - name: DB_CONNECTION_STRING
+              value: "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
+          envFrom:
+            - configMapRef:
+                name: cinemaabyss-config
+            - secretRef:
+                name: cinemaabyss-secrets
+          resources:
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/movies/health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/movies/health
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      restartPolicy: Always
 ---
 apiVersion: v1
 kind: Service
@@ -68,6 +68,6 @@ spec:
   selector:
     app: movies-service
   ports:
-  - port: 8081
-    targetPort: 8081
+    - port: 8081
+      targetPort: 8081
   type: ClusterIP

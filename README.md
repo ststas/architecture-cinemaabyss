@@ -129,28 +129,38 @@ GitHub Actions для непрерывной интеграции и разве�
 
 #### Развертывание
 
+##### Примечание по GHCR imagePullSecret
+
+В репозитории хранится безопасный шаблон `src/kubernetes/dockerconfigsecret.yaml` без реального GitHub PAT.
+Если GHCR images приватные, перед деплоем создайте локальный файл `src/kubernetes/dockerconfigsecret.local.yaml` с вашим `.dockerconfigjson` или замените значение `.dockerconfigjson` локально перед `kubectl apply`.
+Файл `dockerconfigsecret.local.yaml` добавлен в `.gitignore`, чтобы не коммитить секреты.
+
 1. Создайте namespace:
 ```bash
 kubectl apply -f src/kubernetes/namespace.yaml
 ```
-2. Разверните Kafka:
+2. Создайте секрет для доступа к приватным GHCR images:
+```bash
+kubectl apply -f src/kubernetes/dockerconfigsecret.local.yaml
+```
+3. Разверните Kafka:
 ```bash
 kubectl apply -f src/kubernetes/kafka/kafka.yaml
 ```
-3. Разверните базу данных:
+4. Разверните базу данных:
 ```bash
 kubectl apply -f src/kubernetes/postgres.yaml
 ```
-4. Разверните монолит:
+5. Разверните монолит:
 ```bash
 kubectl apply -f src/kubernetes/monolith.yaml
 ```
-5.Разверните микросервисы:
+6. Разверните микросервисы:
 ```bash
 kubectl apply -f src/kubernetes/movies-service.yaml
 kubectl apply -f src/kubernetes/events-service.yaml
 ```
-6. Разверните прокси-сервис:
+7. Разверните прокси-сервис:
 ```bash
 kubectl apply -f src/kubernetes/proxy-service.yaml
 ```

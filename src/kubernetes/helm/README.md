@@ -128,8 +128,8 @@ helm uninstall cinemaabyss
 | Name                           | Description                                     | Value           |
 |--------------------------------|-------------------------------------------------|-----------------|
 | `kafka.enabled`                | Enable Kafka deployment                         | `true`          |
-| `kafka.image.repository`       | Kafka image repository                          | `wurstmeister/kafka` |
-| `kafka.image.tag`              | Kafka image tag                                 | `2.13-2.7.0`    |
+| `kafka.image.repository`       | Kafka image repository                          | `confluentinc/cp-kafka` |
+| `kafka.image.tag`              | Kafka image tag                                 | `7.5.0`         |
 | `kafka.image.pullPolicy`       | Kafka image pull policy                         | `IfNotPresent`  |
 | `kafka.replicas`               | Number of Kafka replicas                        | `1`             |
 | `kafka.resources.limits.cpu`   | Kafka CPU limit                                 | `1000m`         |
@@ -146,8 +146,8 @@ helm uninstall cinemaabyss
 | Name                           | Description                                     | Value           |
 |--------------------------------|-------------------------------------------------|-----------------|
 | `zookeeper.enabled`            | Enable Zookeeper deployment                     | `true`          |
-| `zookeeper.image.repository`   | Zookeeper image repository                      | `wurstmeister/zookeeper` |
-| `zookeeper.image.tag`          | Zookeeper image tag                             | `latest`        |
+| `zookeeper.image.repository`   | Zookeeper image repository                      | `confluentinc/cp-zookeeper` |
+| `zookeeper.image.tag`          | Zookeeper image tag                             | `7.5.0`         |
 | `zookeeper.image.pullPolicy`   | Zookeeper image pull policy                     | `IfNotPresent`  |
 | `zookeeper.replicas`           | Number of Zookeeper replicas                    | `1`             |
 | `zookeeper.resources.limits.cpu`| Zookeeper CPU limit                            | `500m`          |
