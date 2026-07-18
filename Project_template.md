@@ -295,7 +295,7 @@ kubectl apply -f src/kubernetes/ingress.yaml
 minikube tunnel
 ```
 
-1. Вызовите [https://cinemaabyss.example.com/api/movies](https://cinemaabyss.example.com/api/movies)
+1. Вызовите [http://cinemaabyss.example.com/api/movies](http://cinemaabyss.example.com/api/movies)
    Вы должны увидеть вывод списка фильмов
    Можно поэкспериментировать со значением MOVIES_MIGRATION_PERCENT в src/kubernetes/configmap.yaml и убедится, что вызовы movies уходят полностью в новый сервис
 2. Запустите тесты из папки tests/postman
@@ -309,7 +309,9 @@ minikube tunnel
 
 #### Шаг 3
 
-Добавьте сюда скриншота вывода при вызове [https://cinemaabyss.example.com/api/movies](https://cinemaabyss.example.com/api/movies) и скриншот вывода event-service после вызова тестов.
+[Скриншот вызова /api/movies через Ingress](tests/postman/screenshots/kubernetes-movies.png)
+
+[Скриншот логов events-service после Kubernetes-тестов](tests/postman/screenshots/kubernetes-events-logs.png)
 
 # Задание 4
 
@@ -388,8 +390,8 @@ minikube tunnel
 ```
 
 Потом вызовите
-[https://cinemaabyss.example.com/api/movies](https://cinemaabyss.example.com/api/movies)
-и приложите скриншот развертывания helm и вывода [https://cinemaabyss.example.com/api/movies](https://cinemaabyss.example.com/api/movies)
+[http://cinemaabyss.example.com/api/movies](http://cinemaabyss.example.com/api/movies)
+и приложите скриншот развертывания helm и вывода [http://cinemaabyss.example.com/api/movies](http://cinemaabyss.example.com/api/movies)
 
 ## Удаляем все
 
