@@ -6,9 +6,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -51,6 +53,10 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	if err := service.ensureTopics(ctx); err != nil {
+		log.Fatalf("Failed to ensure Kafka topics: %v", err)
+	}
 
 	service.startConsumers(ctx)
 
@@ -105,6 +111,61 @@ func newEventService(config Config) *EventService {
 		config:  config,
 		writers: writers,
 	}
+}
+
+func (s *EventService) ensureTopics(ctx context.Context) error {
+	var lastErr error
+
+	for attempt := 1; attempt <= 12; attempt++ {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		lastErr = s.createTopicsOnce(ctx)
+		if lastErr == nil {
+			log.Printf("Kafka topics are ready: %s, %s, %s", movieEventsTopic, userEventsTopic, paymentEventsTopic)
+			return nil
+		}
+
+		log.Printf("Kafka topics are not ready yet, attempt %d/12: %v", attempt, lastErr)
+		time.Sleep(time.Duration(attempt) * time.Second)
+	}
+
+	return lastErr
+}
+
+func (s *EventService) createTopicsOnce(ctx context.Context) error {
+	dialCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	conn, err := kafka.DialContext(dialCtx, "tcp", s.config.KafkaBrokers[0])
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	controller, err := conn.Controller()
+	if err != nil {
+		return err
+	}
+
+	controllerAddress := net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port))
+	controllerConn, err := kafka.DialContext(dialCtx, "tcp", controllerAddress)
+	if err != nil {
+		return err
+	}
+	defer controllerConn.Close()
+
+	err = controllerConn.CreateTopics(
+		kafka.TopicConfig{Topic: movieEventsTopic, NumPartitions: 1, ReplicationFactor: 1},
+		kafka.TopicConfig{Topic: userEventsTopic, NumPartitions: 1, ReplicationFactor: 1},
+		kafka.TopicConfig{Topic: paymentEventsTopic, NumPartitions: 1, ReplicationFactor: 1},
+	)
+	if err != nil && !strings.Contains(strings.ToLower(err.Error()), "already exists") {
+		return err
+	}
+
+	return nil
 }
 
 func (s *EventService) healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -167,8 +228,8 @@ func (s *EventService) publishEvent(ctx context.Context, topic string, eventID s
 	}
 
 	var lastErr error
-	for attempt := 1; attempt <= 3; attempt++ {
-		publishCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	for attempt := 1; attempt <= 6; attempt++ {
+		publishCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 		lastErr = writer.WriteMessages(publishCtx, message)
 		cancel()
 
@@ -176,6 +237,7 @@ func (s *EventService) publishEvent(ctx context.Context, topic string, eventID s
 			return nil
 		}
 
+		log.Printf("Publish attempt %d/6 failed for topic %s: %v", attempt, topic, lastErr)
 		time.Sleep(time.Duration(attempt) * time.Second)
 	}
 
