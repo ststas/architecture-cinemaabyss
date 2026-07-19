@@ -23,9 +23,57 @@ spec:
       labels:
         app: proxy-service
     spec:
+      imagePullSecrets:
+        - name: dockerconfigjson
       containers:
-      - name: proxy-service
-        ..... тут
+        - name: proxy-service
+          image: {{ .Values.proxyService.image.repository }}:{{ .Values.proxyService.image.tag }}
+          imagePullPolicy: {{ .Values.proxyService.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.proxyService.service.targetPort }}
+          env:
+            - name: PORT
+              value: "{{ .Values.proxyService.service.targetPort }}"
+            - name: MONOLITH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: cinemaabyss-config
+                  key: MONOLITH_URL
+            - name: MOVIES_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: cinemaabyss-config
+                  key: MOVIES_SERVICE_URL
+            - name: EVENTS_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: cinemaabyss-config
+                  key: EVENTS_SERVICE_URL
+            - name: GRADUAL_MIGRATION
+              valueFrom:
+                configMapKeyRef:
+                  name: cinemaabyss-config
+                  key: GRADUAL_MIGRATION
+            - name: MOVIES_MIGRATION_PERCENT
+              valueFrom:
+                configMapKeyRef:
+                  name: cinemaabyss-config
+                  key: MOVIES_MIGRATION_PERCENT
+          resources:
+            {{- toYaml .Values.proxyService.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.proxyService.service.targetPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.proxyService.service.targetPort }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      restartPolicy: Always
 ---
 apiVersion: v1
 kind: Service
@@ -38,5 +86,9 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   selector:
-    ... и тут
+    app: proxy-service
+  ports:
+    - port: {{ .Values.proxyService.service.port }}
+      targetPort: {{ .Values.proxyService.service.targetPort }}
+  type: {{ .Values.proxyService.service.type }}
 {{- end }}

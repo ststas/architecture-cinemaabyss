@@ -391,7 +391,8 @@ minikube tunnel
 
 Потом вызовите
 [http://cinemaabyss.example.com/api/movies](http://cinemaabyss.example.com/api/movies)
-и приложите скриншот развертывания helm и вывода [http://cinemaabyss.example.com/api/movies](http://cinemaabyss.example.com/api/movies)
+и приложите скриншот.
+[Скриншот развертывания helm и вывода http://cinemaabyss.example.com/api/movies](tests/postman/screenshots/helm-status-and-movies-service-request.png)
 
 ## Удаляем все
 
