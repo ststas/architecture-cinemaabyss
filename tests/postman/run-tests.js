@@ -27,7 +27,7 @@ const argv = yargs(hideBin(process.argv))
     alias: 'r',
     description: 'Reporters to use (comma-separated)',
     type: 'string',
-    default: 'cli,htmlextra,junit'
+    default: 'cli,junit'
   })
   .option('bail', {
     alias: 'b',

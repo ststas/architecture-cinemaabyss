@@ -1,0 +1,76 @@
+@startuml
+title CinemaAbyss To-Be Container Diagram
+
+left to right direction
+
+!define RELATIVE_INCLUDE .
+!include ../C4_Container.puml
+
+!define ASIS_COLOR #FFF2CC
+!define TOBE_COLOR #D5E8D4
+!define INFRA_COLOR #DAE8FC
+!define DATA_COLOR #E1D5E7
+
+AddContainerTag("asis", $bgColor=ASIS_COLOR, $fontColor="#000000", $borderColor="#C9B458", $legendText="Migrate from monolith")
+AddContainerTag("tobe", $bgColor=TOBE_COLOR, $fontColor="#000000", $borderColor="#82B366", $legendText="New features")
+AddContainerTag("infra", $bgColor=INFRA_COLOR, $fontColor="#000000", $borderColor="#6C8EBF", $legendText="Infrastructure")
+AddContainerTag("data", $bgColor=DATA_COLOR, $fontColor="#000000", $borderColor="#9673A6", $legendText="Data store")
+
+Person(client, "CinemaAbyss client", "Web/mobile client, который вызывает CinemaAbyss APIs")
+
+System_Boundary(cinemaabyss, "CinemaAbyss platform - целевое состояние через 2 месяца") {
+  Container(proxy, "Proxy / API Gateway", "HTTP service", "Единая точка входа для клиентов. Применяет Strangler Fig routing и feature flags для постепенной миграции трафика.", $tags="tobe")
+
+  Container(monolith, "CinemaAbyss Monolith", "Go HTTP service", "Существующее приложение. В период миграции всё ещё отвечает за Users, Payments, Subscriptions и legacy Movies fallback.", $tags="asis")
+
+  Container(movies, "Movies Service", "Go HTTP service", "Выделенный сервис домена Movies: метаданные фильмов, жанры и рейтинги.", $tags="tobe")
+
+  Container(events, "Events Service MVP", "HTTP service + Kafka producer/consumer", "MVP service принимает Movie/User/Payment events, публикует их в Kafka и читает обратно для логирования обработки.", $tags="tobe")
+
+  ContainerDb(postgres, "PostgreSQL", "Relational database", "Текущее общее хранилище для Monolith и Movies Service.", $tags="data")
+
+  ContainerQueue(kafka, "Kafka", "Message broker", "Интеграционный MVP для топиков movie-events, user-events и payment-events.", $tags="infra")
+
+  Container(kafkaUi, "Kafka UI", "Web UI", "Operational UI для проверки brokers, topics и messages.", $tags="infra")
+}
+
+Rel(client, proxy, "Вызывает public API", "HTTP")
+
+Rel(proxy, monolith, "Маршрутизирует Users, Payments, Subscriptions и movie fallback traffic", "HTTP")
+Rel(proxy, movies, "Маршрутизирует выбранную часть /api/movies traffic по GRADUAL_MIGRATION и MOVIES_MIGRATION_PERCENT", "HTTP")
+Rel(proxy, events, "Маршрутизирует /api/events/* requests", "HTTP")
+
+Rel(monolith, postgres, "Читает и пишет legacy domain data", "SQL")
+Rel(movies, postgres, "Читает и пишет movie metadata", "SQL")
+
+Rel(events, kafka, "Публикует Movie/User/Payment events", "Kafka protocol")
+Rel(kafka, events, "Доставляет messages из тех же topics для processing и logging", "Kafka protocol")
+Rel(kafkaUi, kafka, "Показывает topics и broker state", "Kafka protocol")
+
+note right of monolith
+  Future bounded contexts показаны на диаграмме,
+  но большая часть функциональности пока остаётся внутри Monolith:
+  - Users
+  - Payments
+  - Subscriptions
+  - legacy Movies fallback
+end note
+
+note right of postgres
+  Shared PostgreSQL остаётся общим на период миграции.
+  Data ownership по доменам ещё не разделён.
+  PostgreSQL обрабатывает параллельные записи транзакционно,
+  но общая запись из нескольких сервисов остаётся миграционным риском.
+  Movies Service является целевым владельцем movie data;
+  доступ Monolith к записи movie data должен быть постепенно выведен.
+end note
+
+note bottom of cinemaabyss
+  Целевое состояние через 2 месяца: Monolith остаётся активным.
+  Proxy/API Gateway, Movies Service и Events Service MVP
+  работают рядом с ним и поддерживают Strangler Fig migration.
+end note
+
+SHOW_LEGEND()
+
+@enduml
