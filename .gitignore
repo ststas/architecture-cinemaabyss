@@ -47,6 +47,7 @@ docker-compose.override.yml
 kubeconfig
 *.kubeconfig
 .kube/
+src/kubernetes/dockerconfigsecret.local.yaml
 
 # Environment variables
 .env

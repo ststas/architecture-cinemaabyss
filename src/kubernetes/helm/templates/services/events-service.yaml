@@ -23,9 +23,37 @@ spec:
       labels:
         app: events-service
     spec:
+      imagePullSecrets:
+        - name: dockerconfigjson
       containers:
-      - name: events-service
-       .... тут
+        - name: events-service
+          image: {{ .Values.eventsService.image.repository }}:{{ .Values.eventsService.image.tag }}
+          imagePullPolicy: {{ .Values.eventsService.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.eventsService.service.targetPort }}
+          env:
+            - name: PORT
+              value: "{{ .Values.eventsService.service.targetPort }}"
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: cinemaabyss-config
+                  key: KAFKA_BROKERS
+          resources:
+            {{- toYaml .Values.eventsService.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /api/events/health
+              port: {{ .Values.eventsService.service.targetPort }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/events/health
+              port: {{ .Values.eventsService.service.targetPort }}
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      restartPolicy: Always
 ---
 apiVersion: v1
 kind: Service
@@ -37,5 +65,10 @@ metadata:
     app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
- ........ и тут
+  selector:
+    app: events-service
+  ports:
+    - port: {{ .Values.eventsService.service.port }}
+      targetPort: {{ .Values.eventsService.service.targetPort }}
+  type: {{ .Values.eventsService.service.type }}
 {{- end }}
